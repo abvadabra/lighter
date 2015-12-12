@@ -8,6 +8,8 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.util.ChatComponentText
 import net.minecraftforge.common.MinecraftForge
 import net.minecraftforge.common.config.Configuration
+import org.yanex.telegram.Message
+import org.yanex.telegram.Response
 import org.yanex.telegram.TelegramBot
 import retrofit.RestAdapter
 import ru.redenergy.lighter.handler.ChatListener
@@ -33,17 +35,29 @@ object Lighter {
     @Mod.EventHandler
     fun init(event: FMLInitializationEvent){
         bot = TelegramBot(token, RestAdapter.LogLevel.NONE)
-        Thread({
-            bot.listen { action ->
-                println(action)
-                try {
-                    val text = "<TL> <${action.from?.userName}>: ${action.text}"
-                    MinecraftServer.getServer().configurationManager.playerEntityList
-                            .forEach { (it as EntityPlayer).addChatMessage(ChatComponentText(text)) }
-                } catch(ex: Exception){ex.printStackTrace()}
-            }
-        }).start()
+        setupListeningThread()
         MinecraftForge.EVENT_BUS.register(ChatListener(chatId))
+    }
+
+    fun setupListeningThread(){
+        Thread({ bot.listen { handleTelegramMessage(it) }}).start()
+    }
+
+    fun handleTelegramMessage(message: Message){
+        val text = message.text!!
+        if(text.startsWith("/id")){
+            bot.sendMessage(chatId = message.chat.id.toString(), text = "Chat ID: " + message.chat.id)
+        } else {
+            val sender = message.from?.userName ?: return
+            publishTelegramMessage(sender, text)
+        }
+    }
+
+    fun publishTelegramMessage(sender: String, text: String){
+        val text = "<TL> <$sender>: $text"
+        MinecraftServer.getServer().configurationManager.playerEntityList.forEach {
+            (it as EntityPlayer).addChatMessage(ChatComponentText(text))
+        }
     }
 
 }
