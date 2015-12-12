@@ -40,7 +40,11 @@ object Lighter {
     }
 
     fun setupListeningThread(){
-        Thread({ bot.listen { handleTelegramMessage(it) }}).start()
+        Thread({ bot.listen {
+            try {
+                handleTelegramMessage(it)
+            } catch(ex: Exception) {ex.printStackTrace()}
+        }}).start()
     }
 
     fun handleTelegramMessage(message: Message){
