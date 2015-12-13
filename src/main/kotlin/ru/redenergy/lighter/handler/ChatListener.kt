@@ -8,8 +8,7 @@ class ChatListener(val chatId: String) {
 
     @SubscribeEvent
     fun onChatAction(event: ServerChatEvent) {
-        val text = "<${event.username}> ${event.message}"
-        Lighter.bot.sendMessage(chatId = chatId, text = text)
+        Lighter.handleIngameMessage(event.player, event.message)
     }
 
 }
